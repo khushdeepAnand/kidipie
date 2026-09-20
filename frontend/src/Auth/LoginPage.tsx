@@ -12,7 +12,7 @@ export type Tokens = {
 }
 
 export function LoginPage() {
-  const { token, setToken } = useAuth()
+  const { setToken } = useAuth()
   const navigate = useNavigate()
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +26,11 @@ export function LoginPage() {
     })
     console.log(res)
     setToken(res)
-    navigate('/')
+console.log("before navigate");
+
+  navigate('/');
+
+  console.log("after navigate");
   };
 
   return (

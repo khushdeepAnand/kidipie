@@ -2,18 +2,10 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
 import { api } from '../api/axios';
 
-// --- Types ---
 export type User = {
   id: string;
   email: string;
   name?: string;
-};
-
-export type AuthContextType = {
-  user: User | null;
-  token: Tokens | null;
-  loading: boolean;
-  setToken: (token: Tokens) => void;
 };
 
 export interface UserCredentials {
@@ -21,52 +13,85 @@ export interface UserCredentials {
   password: string;
 }
 
-type Tokens = {
+export type Tokens = {
   access_token: string;
   refresh_token: string;
   user_id: string;
 };
 
-// --- Provider ---
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>();
-  const [loading, setLoading] = useState(true);
+export type AuthContextType = {
+  user: User | null;
+  token: Tokens | null;
+  loading: boolean;
+  setToken: (token: Tokens | null) => void;
+};
 
-  const [token, setToken] = useState<Tokens | null>(() => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  const [token, setTokenState] = useState<Tokens | null>(() => {
     const stored = localStorage.getItem('tokens');
-    if (stored) {
-      try {
-        return JSON.parse(stored)?.access_token || null;
-      } catch {
-        return null;
-      }
+
+    if (!stored) {
+      return null;
     }
-    return null;
+
+    try {
+      return JSON.parse(stored);
+    } catch {
+      localStorage.removeItem('tokens');
+      return null;
+    }
   });
 
-  const getUser = async () => {
-    try {
-      const response = await api.get('auth/user')
-      setUser(response.data)
-    } catch (error) {
-      console.log(error)
+  const [loading, setLoading] = useState(true);
+
+  const setToken = (tokens: Tokens | null) => {
+    if (tokens) {
+      localStorage.setItem('tokens', JSON.stringify(tokens));
+    } else {
+      localStorage.removeItem('tokens');
     }
+
+    setTokenState(tokens);
+  };
+
+const getUser = async () => {
+  try {
+    console.log("calling /auth/user");
+
+    const response = await api.get("auth/user");
+
+    console.log("user response:", response.data);
+
+    setUser(response.data);
+  } catch (error) {
+    console.log("USER REQUEST ERROR:", error);
+    setUser(null);
   }
+};
 
-  useEffect(() => {
-    const mountUser = async () => {
-      if (token) {
-        await getUser()
+useEffect(() => {
+  const mountUser = async () => {
+    if (token) {
+      try {
+        await getUser();
+        console.log("getUser SUCCESS");
+      } catch (error) {
+        console.log("getUser FAILED:", error);
       }
-      setLoading(false)
+    } else {
+      console.log("NO TOKEN");
     }
-    mountUser()
-  }, [token])
 
-  // this is not safe but for now storing credentials in local storage
+    setLoading(false);
+  };
+
+  mountUser();
+}, [token]);
 
   const value: AuthContextType = {
-    user: user || null,
+    user,
     token,
     loading,
     setToken,
