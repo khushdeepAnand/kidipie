@@ -16,7 +16,7 @@ async def list_comments(post_id: Annotated[int, Path(ge=1)]):
     response = (
         supabase
         .table("comments")
-        .select("*")
+        .select("*, users(username)")
         .eq("post_id", post_id)
         .order("created_at", desc=False)
         .execute()
@@ -30,14 +30,13 @@ async def create_comment(post_id: Annotated[int, Path(ge=1)],
                          auth_id=Depends(get_current_user_id),
                          credentials: HTTPAuthorizationCredentials =
                          Depends(bearer_scheme)):
-
     db = create_client(SUPABASE_URL, SUPABASE_KEY)
     db.postgrest.auth(credentials.credentials)
     try:
         response = db.table('comments').insert({
             "user_id": auth_id,
             "post_id": post_id,
-            "comment_text": comment.comment_text
+            "content": comment.content
         }).execute()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create comment \
@@ -59,7 +58,7 @@ async def update_comment(
         response = (
             db.table("comments")
             .update({
-                "comment_text": comment.comment_text
+                "content": comment.content
             })
             .eq("comment_id", comment_id)
             .eq("user_id", auth_id)
