@@ -10,31 +10,43 @@ export interface GalleryItem {
   category: string;
 }
 
-export interface UserProfile {
-  id?: string;
-  name: string;
-  title: string;
-  bio: string;
-  avatar: string;
-  streakDays: number;
-  level: number;
-  xp: number;
-  xpNextLevel: number;
-  streakCalendar: boolean[];
-  gallery: GalleryItem[];
+
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  image_url: string | null;
 }
 
+// export interface UserProfile {
+//   id?: string;
+//   name: string;
+//   title: string;
+//   bio: string;
+//   avatar: string;
+//   streakDays: number;
+//   level: number;
+//   xp: number;
+//   xpNextLevel: number;
+//   streakCalendar: boolean[];
+//   gallery: GalleryItem[];
+// }
+
 export interface CommentItem {
-  id: string;
-  authorName: string;
-  authorAvatar: string;
-  text: string;
-  timeAgo: string;
+  comment_id: string;
+  post_id: number;
+  content: string;
+  created_at: string;
+  user_id: string;
+  users: {
+    username: string;
+    image_url: string;
+  },
 }
 
 export interface PostItem {
   id: string;
-  author: UserProfile;
+  author: User;
   users: {
     username: string;
     image_url: string;
@@ -62,6 +74,7 @@ export interface CreatedPost {
   image_url: string | null;
   created_at: string;
   users: {
+    email: string;
     user_id?: string;
     username: string;
     image_url: string;
@@ -70,7 +83,7 @@ export interface CreatedPost {
 }
 
 export interface PostBoxProps {
-  currentUser?: UserProfile;
+  currentUser?: User;
   onPost?: (post: CreatedPost) => void | Promise<void>;
   placeholder?: string;
   className?: string;

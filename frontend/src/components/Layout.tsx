@@ -6,12 +6,16 @@ import MobileBottomNav from './MobileBottomNav';
 import PostBox from './PostBox';
 import { X, Sparkles } from 'lucide-react';
 import { usePosts } from '../hooks/usePosts';
+import { useAuth } from '../context/AuthContext';
+import type { CreatedPost } from '../types';
 
 export const Layout: React.FC = () => {
   const [isNewPostModalOpen, setIsNewPostModalOpen] = useState(false);
   const { userProfile } = usePosts();
+  const { user } = useAuth();
 
-  const handlePostSubmit = () => {
+  const handlePostSubmit = (created: CreatedPost) => {
+    window.dispatchEvent(new CustomEvent('post-created', { detail: created }));
     setIsNewPostModalOpen(false);
   };
 
@@ -52,7 +56,7 @@ export const Layout: React.FC = () => {
             </div>
             <div className="p-4">
               <PostBox
-                currentUser={userProfile}
+                currentUser={user ?? userProfile}
                 onPost={handlePostSubmit}
                 placeholder="What amazing thing did you build or draw today?"
                 className="border-none shadow-none p-0"

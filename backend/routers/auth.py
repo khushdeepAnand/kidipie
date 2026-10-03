@@ -26,6 +26,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
 @router.post("/login")
 def login(payload: LoginRequest):
     try:
@@ -169,14 +173,18 @@ async def logout():
 
 
 @router.post("/refresh")
-async def refresh_token(refresh_token: str):
+async def refresh_token(payload: RefreshRequest):
     try:
-        response = supabase.auth.refresh_session(refresh_token)
+        response = supabase.auth.refresh_session(payload.refresh_token)
         new_session = response.session
+        if new_session is None:
+            raise HTTPException(status_code=401, detail="Refresh token is invalid or expired")
         return {
             "access_token": new_session.access_token,
             "refresh_token": new_session.refresh_token,
             "expires_in": new_session.expires_in,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=401, detail="Could not refresh session")

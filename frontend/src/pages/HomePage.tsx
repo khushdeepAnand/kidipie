@@ -1,24 +1,19 @@
 import React, { useEffect, useState } from "react";
 import PostBox from "../components/PostBox";
 import PostCard from "../components/PostCard";
-import usePosts from "../hooks/usePosts";
 import { fetchPosts } from "../api/axios";
 import type { CreatedPost, PostItem } from "../types";
+import { useAuth } from "../context/AuthContext";
 
-const toFeedPost = (post: CreatedPost): PostItem => ({
+export const toFeedPost = (post: CreatedPost): PostItem => ({
   id: String(post.post_id),
   author: {
-    name: post.users?.username || "User",
-    title: "",
-    bio: "",
-    avatar: post.users?.image_url || "",
-    streakDays: 0,
-    level: 0,
-    xp: 0,
-    xpNextLevel: 0,
-    streakCalendar: [],
-    gallery: [],
+    username: post.users?.username || "User",
+    image_url: post.users?.image_url || "",
+    id: post.users?.user_id || "",
+    email: post.users?.email || "",
   },
+
   users: {
     username: post.users?.username || "User",
     image_url: post.users?.image_url || "",
@@ -36,7 +31,7 @@ const toFeedPost = (post: CreatedPost): PostItem => ({
 });
 
 export const HomePage: React.FC = () => {
-  const { userProfile } = usePosts();
+  const { user } = useAuth()
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +49,15 @@ export const HomePage: React.FC = () => {
     getPosts();
   }, []);
 
+  useEffect(() => {
+    const handlePostCreated = (event: Event) => {
+      const created = (event as CustomEvent<CreatedPost>).detail;
+      if (created) setPosts((prev) => [toFeedPost(created), ...prev]);
+    };
+    window.addEventListener("post-created", handlePostCreated);
+    return () => window.removeEventListener("post-created", handlePostCreated);
+  }, []);
+
   const handleCreatedPost = (created: CreatedPost) => {
     setPosts((prev) => [toFeedPost(created), ...prev]);
   };
@@ -65,7 +69,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PostBox
-        currentUser={userProfile}
+        currentUser={user}
         onPost={handleCreatedPost}
         placeholder="Share your latest project or idea..."
       />

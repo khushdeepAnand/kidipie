@@ -75,7 +75,9 @@ async def create_post(
 
         # Fetch the complete post with user + reactions
         post = (
-            db
+            # Use the admin client for this read so the creator's public
+            # profile is present even when users-table RLS hides the join.
+            supabase_admin
             .table("posts")
             .select("*, users(user_id, username, image_url), reactions(*)")
             .eq("post_id", post_id)

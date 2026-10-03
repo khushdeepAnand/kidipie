@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Heart, MessageCircle, Sparkles, Smile, Send } from "lucide-react";
-import type { PostItem } from "../types";
+import type { PostItem, CommentItem } from "../types";
 import { usePosts } from "../hooks/usePosts";
 
 interface PostCardProps {
@@ -60,13 +60,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       setCommentText("");
     }
   };
+  const fetchUserAvatar = (item: PostItem | CommentItem): string => {
+    const user = item.users;
+    if (user?.image_url) return user.image_url;
+    return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.username ?? "anon")}`;
+  };
 
   return (
     <article className="bg-[var(--bg-card)] rounded-2xl p-5 border-2 border-[var(--border-subtle)] shadow-sm space-y-4 hover:border-[var(--border-medium)] transition-colors">
       {/* Header Info */}
       <div className="flex items-center gap-3">
         <img
-          src={post.users?.image_url ?? "https://api.dicebear.com/9.x/initials/svg?seed=" + post.users?.username}
+          src={fetchUserAvatar(post)}
           alt={post.users?.username ?? "User avatar"}
           className="w-10 h-10 rounded-full border-2 border-[var(--primary)] object-cover shrink-0"
           onError={(e) => {
@@ -76,7 +81,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         />
         <div>
           <h3 className="font-bold text-[var(--text-main)] text-sm">
-            {post.users?.username}
+            {post.users?.username || post.author?.username || "User"}
           </h3>
           <span className="text-xs text-[var(--text-muted)] font-medium">
             {formatRelativeTime(post.created_at)}
@@ -99,12 +104,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Post Attachment Image */}
       {post.image_url && (
         <div className="rounded-xl overflow-hidden border border-[var(--border-subtle)] bg-[var(--bg-input)]">
-          {post.image_url && 
-          <img
-            src={post.image_url}
-            alt={post.imageAlt ?? "Post attachment"}
-            className="w-full max-h-96 object-cover hover:scale-[1.01] transition-transform duration-200"
-          />
+          {post.image_url &&
+            <img
+              src={post.image_url}
+              alt={post.imageAlt ?? "Post attachment"}
+              className="w-full max-h-96 object-cover hover:scale-[1.01] transition-transform duration-200"
+            />
           }
         </div>
       )}
@@ -164,12 +169,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {post.comments?.length > 0 ? (
               post.comments.map((c) => (
                 <div
-                  key={c.id}
+                  key={c.comment_id}
                   className="flex items-start gap-2.5 bg-[var(--bg-input)] p-2.5 rounded-xl"
                 >
                   <img
-                    src={c.authorAvatar}
-                    alt={c.authorName}
+                    src={fetchUserAvatar(c)}
+                    alt={c.users?.username}
                     className="w-7 h-7 rounded-full object-cover border border-[var(--primary)] shrink-0"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src =
@@ -179,13 +184,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   <div className="flex-1 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-[var(--text-main)]">
-                        {c.authorName}
+                        {c.users?.username}
                       </span>
                       <span className="text-[10px] text-[var(--text-muted)]">
-                        {c.timeAgo}
+                        {c.created_at}
                       </span>
                     </div>
-                    <p className="text-[var(--text-main)] mt-0.5">{c.text}</p>
+                    <p className="text-[var(--text-main)] mt-0.5">{c.content}</p>
                   </div>
                 </div>
               ))

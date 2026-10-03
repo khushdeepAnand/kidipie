@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
-import { api } from '../api/axios';
+import { api, clearStoredTokens, getStoredTokens, setStoredTokens } from '../api/axios';
 
 export type User = {
   id: string;
   email: string;
-  name?: string;
+  username: string;
+  image_url: string | null
 };
 
 export interface UserCredentials {
@@ -29,66 +30,57 @@ export type AuthContextType = {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  const [token, setTokenState] = useState<Tokens | null>(() => {
-    const stored = localStorage.getItem('tokens');
-
-    if (!stored) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(stored);
-    } catch {
-      localStorage.removeItem('tokens');
-      return null;
-    }
-  });
+  const [token, setTokenState] = useState<Tokens | null>(() => getStoredTokens());
 
   const [loading, setLoading] = useState(true);
 
   const setToken = (tokens: Tokens | null) => {
     if (tokens) {
-      localStorage.setItem('tokens', JSON.stringify(tokens));
+      setStoredTokens(tokens);
     } else {
-      localStorage.removeItem('tokens');
+      clearStoredTokens();
     }
 
     setTokenState(tokens);
   };
 
-const getUser = async () => {
-  try {
-    console.log("calling /auth/user");
+  useEffect(() => {
+    const syncTokens = () => setTokenState(getStoredTokens());
+    window.addEventListener('auth-tokens-changed', syncTokens);
+    window.addEventListener('storage', syncTokens);
+    return () => {
+      window.removeEventListener('auth-tokens-changed', syncTokens);
+      window.removeEventListener('storage', syncTokens);
+    };
+  }, []);
 
-    const response = await api.get("auth/user");
-
-    console.log("user response:", response.data);
-
-    setUser(response.data);
-  } catch (error) {
-    console.log("USER REQUEST ERROR:", error);
-    setUser(null);
-  }
-};
-
-useEffect(() => {
-  const mountUser = async () => {
-    if (token) {
-      try {
-        await getUser();
-        console.log("getUser SUCCESS");
-      } catch (error) {
-        console.log("getUser FAILED:", error);
-      }
-    } else {
-      console.log("NO TOKEN");
+  const getUser = async () => {
+    try {
+      const response = await api.get("auth/user");
+      setUser(response.data);
+    } catch (error) {
+      setUser(null);
     }
-
-    setLoading(false);
   };
 
-  mountUser();
-}, [token]);
+  useEffect(() => {
+    const mountUser = async () => {
+      if (token) {
+        try {
+          await getUser();
+          console.log("getUser SUCCESS");
+        } catch (error) {
+          console.log("getUser FAILED:", error);
+        }
+      } else {
+        setUser(null);
+      }
+
+      setLoading(false);
+    };
+
+    mountUser();
+  }, [token]);
 
   const value: AuthContextType = {
     user,
