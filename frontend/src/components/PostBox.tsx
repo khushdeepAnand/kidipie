@@ -90,7 +90,6 @@ export const PostBox: React.FC<PostBoxProps> = ({
   };
 
   const isFormValid = content.trim().length > 0 || !!selectedFile;
-  const avatarUrl = currentUser?.avatar;
 
   return (
     <div
@@ -105,11 +104,11 @@ export const PostBox: React.FC<PostBoxProps> = ({
       />
 
       <div className="flex gap-3 sm:gap-4 items-start">
-        {avatarUrl && (
+        {currentUser?.image_url && (
           <div className="w-10 h-10 rounded-full border-2 border-[var(--primary)] overflow-hidden bg-[var(--bg-input)] shrink-0">
             <img
-              src={avatarUrl}
-              alt={currentUser?.name || "User"}
+              src={currentUser.image_url}
+              alt={currentUser?.username || "User"}
               className="w-full h-full object-cover"
             />
           </div>

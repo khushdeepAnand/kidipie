@@ -81,7 +81,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         />
         <div>
           <h3 className="font-bold text-[var(--text-main)] text-sm">
-            {post.users?.username}
+            {post.users?.username || post.author?.username || "User"}
           </h3>
           <span className="text-xs text-[var(--text-muted)] font-medium">
             {formatRelativeTime(post.created_at)}
